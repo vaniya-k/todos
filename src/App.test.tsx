@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import App from "./App";
 
-describe("Todo App", () => {
+describe("Todos App", () => {
   test("should add a valid todo item", () => {
     render(<App />);
     const input = screen.getByPlaceholderText("Add a new task...");
@@ -16,7 +16,7 @@ describe("Todo App", () => {
     expect(input).toHaveValue("");
   });
 
-  test("should trim whitespace when adding todo item", () => {
+  test("should trim whitespaces when adding todo item", () => {
     render(<App />);
     const input = screen.getByPlaceholderText("Add a new task...");
     const addButton = screen.getByText("Add");

@@ -1,109 +1,114 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { LOCAL_STORAGE_KEY } from "./constants";
+import { Filter } from "./types";
+import type { FilterValue } from "./types";
+import useTodos from "./useTodos";
 import "./index.css";
 
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-}
-
-type FilterType = "all" | "active" | "completed";
-
 function App() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [inputText, setInputText] = useState("");
-  const [filter, setFilter] = useState<FilterType>("all");
+  const textInputRef = useRef<HTMLInputElement>(null);
+  const [filter, setFilter] = useState<FilterValue>(Filter.All);
 
-  const addTodo = (text: string) => {
-    if (text.trim()) {
-      setTodos([
-        ...todos,
-        { id: Date.now(), text: text.trim(), completed: false },
-      ]);
-      setInputText("");
+  const getInitialTodos = () => {
+    const todos = localStorage.getItem(LOCAL_STORAGE_KEY);
+
+    return todos ? JSON.parse(todos) : [];
+  };
+
+  const { todos, add, remove, toggle, clearCompleted } =
+    useTodos(getInitialTodos);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
+  }, [todos]);
+
+  const handleAdd = () => {
+    const text = textInputRef.current?.value.trim() ?? "";
+
+    if (text) {
+      add(text);
+
+      if (textInputRef.current) {
+        textInputRef.current.value = "";
+      }
     }
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
-  };
-
-  const removeTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-  };
-
-  const clearCompleted = () => {
-    setTodos(todos.filter((todo) => !todo.completed));
-  };
-
   const filteredTodos = todos.filter((todo) => {
-    if (filter === "active") return !todo.completed;
-    if (filter === "completed") return todo.completed;
+    if (filter === Filter.Active) return !todo.completed;
+
+    if (filter === Filter.Completed) return todo.completed;
+
     return true;
   });
 
   return (
-    <div className="todo-container">
-      <h1>Todo App</h1>
+    <div className="container">
+      <h1>Todos</h1>
 
-      <div className="todo-input">
+      <div className="new-item-wrapper">
         <input
+          ref={textInputRef}
+          autoFocus
           type="text"
-          id="todo-input"
+          className="new-item"
           placeholder="Add a new task..."
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && addTodo(inputText)}
+          onKeyPress={(e) => e.key === "Enter" && handleAdd()}
         />
-        <button id="add-btn" onClick={() => addTodo(inputText)}>
+        <button className="add-button" onClick={handleAdd}>
           Add
         </button>
       </div>
 
-      <div className="todo-actions">
-        <div className="filter-buttons">
+      <div className="actions">
+        <div className="filters">
           <button
-            className={`filter-btn ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilter("all")}
+            className={`filter-button ${
+              filter === Filter.All ? "selected" : ""
+            }`}
+            onClick={() => setFilter(Filter.All)}
           >
             All
           </button>
           <button
-            className={`filter-btn ${filter === "active" ? "active" : ""}`}
-            onClick={() => setFilter("active")}
+            className={`filter-button ${
+              filter === Filter.Active ? "selected" : ""
+            }`}
+            onClick={() => setFilter(Filter.Active)}
           >
             Active
           </button>
           <button
-            className={`filter-btn ${filter === "completed" ? "active" : ""}`}
-            onClick={() => setFilter("completed")}
+            className={`filter-button ${
+              filter === Filter.Completed ? "selected" : ""
+            }`}
+            onClick={() => setFilter(Filter.Completed)}
           >
             Completed
           </button>
         </div>
-        <button id="clear-completed" onClick={clearCompleted}>
+        <button className="clear-completed-button" onClick={clearCompleted}>
           Clear completed
         </button>
       </div>
 
-      <ul className="todo-list">
+      <ul className="list">
         {filteredTodos.map((todo) => (
           <li
             key={todo.id}
-            className={`todo-item ${todo.completed ? "completed" : ""}`}
+            className={`item ${todo.completed ? "completed" : ""}`}
           >
             <input
               type="checkbox"
-              className="todo-checkbox"
+              id={`item-${todo.id}`}
+              className="checkbox"
               checked={todo.completed}
-              onChange={() => toggleTodo(todo.id)}
+              onChange={() => toggle(todo.id)}
             />
-            <span className="todo-text">{todo.text}</span>
-            <button className="remove-btn" onClick={() => removeTodo(todo.id)}>
+            <label className="text" htmlFor={`item-${todo.id}`}>
+              {todo.text}
+            </label>
+            <button className="remove-button" onClick={() => remove(todo.id)}>
               Remove
             </button>
           </li>
