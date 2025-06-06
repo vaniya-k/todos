@@ -6,7 +6,7 @@ import App from "./App";
 describe("Todos App", () => {
   test("should add a valid todo item", () => {
     render(<App />);
-    const input = screen.getByPlaceholderText("Add a new task...");
+    const input = screen.getByPlaceholderText("Add a new todo...");
     const addButton = screen.getByText("Add");
 
     fireEvent.change(input, { target: { value: "New todo item" } });
@@ -16,9 +16,21 @@ describe("Todos App", () => {
     expect(input).toHaveValue("");
   });
 
-  test("should trim whitespaces when adding todo item", () => {
+  test("shouldn't add an empty todo item", () => {
     render(<App />);
-    const input = screen.getByPlaceholderText("Add a new task...");
+    const input = screen.getByPlaceholderText("Add a new todo...");
+    const addButton = screen.getByText("Add");
+
+    fireEvent.change(input, { target: { value: " " } });
+    fireEvent.click(addButton);
+
+    expect(screen.queryByText(" ")).toBeNull();
+    expect(input).toHaveValue(" ");
+  });
+
+  test("should trim whitespaces when adding a todo item", () => {
+    render(<App />);
+    const input = screen.getByPlaceholderText("Add a new todo...");
     const addButton = screen.getByText("Add");
 
     fireEvent.change(input, { target: { value: "   Trim this    " } });
@@ -30,10 +42,9 @@ describe("Todos App", () => {
 
   test("should remove a todo item", () => {
     render(<App />);
-    const input = screen.getByPlaceholderText("Add a new task...");
+    const input = screen.getByPlaceholderText("Add a new todo...");
     const addButton = screen.getByText("Add");
 
-    // Add an item
     fireEvent.change(input, { target: { value: "Item to remove" } });
     fireEvent.click(addButton);
 
@@ -45,30 +56,25 @@ describe("Todos App", () => {
 
   test("should filter todo items correctly", () => {
     render(<App />);
-    const input = screen.getByPlaceholderText("Add a new task...");
+    const input = screen.getByPlaceholderText("Add a new todo...");
     const addButton = screen.getByText("Add");
 
-    // Add two items
     fireEvent.change(input, { target: { value: "Active task" } });
     fireEvent.click(addButton);
     fireEvent.change(input, { target: { value: "Completed task" } });
     fireEvent.click(addButton);
 
-    // Complete the second task
     const checkboxes = screen.getAllByRole("checkbox");
     fireEvent.click(checkboxes[1]);
 
-    // Test active filter
     fireEvent.click(screen.getByText("Active"));
     expect(screen.getByText("Active task")).toBeDefined();
     expect(screen.queryByText("Completed task")).toBeNull();
 
-    // Test completed filter
     fireEvent.click(screen.getByText("Completed"));
     expect(screen.queryByText("Active task")).toBeNull();
     expect(screen.getByText("Completed task")).toBeDefined();
 
-    // Test all filter
     fireEvent.click(screen.getByText("All"));
     expect(screen.getByText("Active task")).toBeDefined();
     expect(screen.getByText("Completed task")).toBeDefined();
@@ -76,23 +82,32 @@ describe("Todos App", () => {
 
   test("should clear completed todos", () => {
     render(<App />);
-    const input = screen.getByPlaceholderText("Add a new task...");
+    const input = screen.getByPlaceholderText("Add a new todo...");
     const addButton = screen.getByText("Add");
 
-    // Add two items
     fireEvent.change(input, { target: { value: "Active task" } });
     fireEvent.click(addButton);
     fireEvent.change(input, { target: { value: "Completed task" } });
     fireEvent.click(addButton);
 
-    // Complete the second task
     const checkboxes = screen.getAllByRole("checkbox");
     fireEvent.click(checkboxes[1]);
 
-    // Clear completed
     fireEvent.click(screen.getByText("Clear completed"));
 
     expect(screen.getByText("Active task")).toBeDefined();
     expect(screen.queryByText("Completed task")).toBeNull();
+  });
+
+  test("should persist todos in localStorage", () => {
+    const { unmount } = render(<App />);
+    const input = screen.getByPlaceholderText("Add a new todo...");
+    fireEvent.change(input, { target: { value: "Test Todo" } });
+    fireEvent.click(screen.getByText("Add"));
+
+    unmount();
+    render(<App />);
+
+    expect(screen.getByText("Test Todo")).toBeInTheDocument();
   });
 });

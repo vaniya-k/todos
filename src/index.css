@@ -12,7 +12,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.new-item-wrapper {
+.new-item-form {
   display: flex;
   height: 44px;
   margin-bottom: 20px;
@@ -65,6 +65,7 @@ body {
 
 .checkbox {
   margin-right: 10px;
+  cursor: pointer;
 }
 
 .text {
