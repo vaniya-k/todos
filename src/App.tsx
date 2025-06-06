@@ -22,7 +22,9 @@ function App() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
   }, [todos]);
 
-  const handleAdd = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     const text = textInputRef.current?.value.trim() ?? "";
 
     if (text) {
@@ -31,6 +33,21 @@ function App() {
       if (textInputRef.current) {
         textInputRef.current.value = "";
       }
+    }
+  };
+
+  const handleListClick = (e: React.MouseEvent<HTMLUListElement>) => {
+    const target = e.target as HTMLElement;
+    const id = target.id;
+
+    if (id && id.startsWith("checkbox-")) {
+      const todoId = Number.parseInt(id.replace("checkbox-", ""));
+      toggle(todoId);
+    }
+
+    if (id && id.startsWith("remove-")) {
+      const todoId = Number.parseInt(id.replace("remove-", ""));
+      remove(todoId);
     }
   };
 
@@ -46,53 +63,40 @@ function App() {
     <div className="container">
       <h1>Todos</h1>
 
-      <div className="new-item-wrapper">
+      <form className="new-item-form" onSubmit={handleSubmit}>
         <input
           ref={textInputRef}
           autoFocus
           type="text"
           className="new-item"
-          placeholder="Add a new task..."
-          onKeyPress={(e) => e.key === "Enter" && handleAdd()}
+          placeholder="Add a new todo..."
         />
-        <button className="add-button" onClick={handleAdd}>
+        <button type="submit" className="add-button">
           Add
         </button>
-      </div>
+      </form>
 
       <div className="actions">
-        <div className="filters">
-          <button
-            className={`filter-button ${
-              filter === Filter.All ? "selected" : ""
-            }`}
-            onClick={() => setFilter(Filter.All)}
-          >
-            All
-          </button>
-          <button
-            className={`filter-button ${
-              filter === Filter.Active ? "selected" : ""
-            }`}
-            onClick={() => setFilter(Filter.Active)}
-          >
-            Active
-          </button>
-          <button
-            className={`filter-button ${
-              filter === Filter.Completed ? "selected" : ""
-            }`}
-            onClick={() => setFilter(Filter.Completed)}
-          >
-            Completed
-          </button>
+        <div className="filters" role="group" aria-label="Filter todos">
+          {Object.values(Filter).map((filterValue) => (
+            <button
+              key={filterValue}
+              className={`filter-button ${
+                filter === filterValue ? "selected" : ""
+              }`}
+              onClick={() => setFilter(filterValue)}
+              aria-pressed={filter === filterValue}
+            >
+              {`${filterValue[0].toUpperCase() + filterValue.slice(1)}`}
+            </button>
+          ))}
         </div>
         <button className="clear-completed-button" onClick={clearCompleted}>
           Clear completed
         </button>
       </div>
 
-      <ul className="list">
+      <ul className="list" aria-label="Todos list" onClick={handleListClick}>
         {filteredTodos.map((todo) => (
           <li
             key={todo.id}
@@ -100,15 +104,22 @@ function App() {
           >
             <input
               type="checkbox"
-              id={`item-${todo.id}`}
+              id={`checkbox-${todo.id}`}
               className="checkbox"
               checked={todo.completed}
-              onChange={() => toggle(todo.id)}
+              readOnly
+              aria-label={`"${todo.text}" is ${
+                todo.completed ? "completed" : "active"
+              }`}
             />
-            <label className="text" htmlFor={`item-${todo.id}`}>
+            <label className="text" htmlFor={`checkbox-${todo.id}`}>
               {todo.text}
             </label>
-            <button className="remove-button" onClick={() => remove(todo.id)}>
+            <button
+              id={`remove-${todo.id}`}
+              className="remove-button"
+              aria-label={`Remove "${todo.text}"`}
+            >
               Remove
             </button>
           </li>

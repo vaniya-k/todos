@@ -16,7 +16,19 @@ describe("Todos App", () => {
     expect(input).toHaveValue("");
   });
 
-  test("should trim whitespaces when adding todo item", () => {
+  test("shouldn't add an empty todo item", () => {
+    render(<App />);
+    const input = screen.getByPlaceholderText("Add a new task...");
+    const addButton = screen.getByText("Add");
+
+    fireEvent.change(input, { target: { value: " " } });
+    fireEvent.click(addButton);
+
+    expect(screen.queryByText(" ")).toBeNull();
+    expect(input).toHaveValue(" ");
+  });
+
+  test("should trim whitespaces when adding a todo item", () => {
     render(<App />);
     const input = screen.getByPlaceholderText("Add a new task...");
     const addButton = screen.getByText("Add");
@@ -94,5 +106,17 @@ describe("Todos App", () => {
 
     expect(screen.getByText("Active task")).toBeDefined();
     expect(screen.queryByText("Completed task")).toBeNull();
+  });
+
+  test("should persist todos in localStorage", () => {
+    render(<App />);
+    const input = screen.getByPlaceholderText("Add a new task...");
+    fireEvent.change(input, { target: { value: "Test Todo" } });
+    fireEvent.click(screen.getByText("Add"));
+
+    // Check localStorage
+    const stored = JSON.parse(localStorage.getItem("todos") || "[]");
+    expect(stored).toHaveLength(1);
+    expect(stored[0].text).toBe("Test Todo");
   });
 });
